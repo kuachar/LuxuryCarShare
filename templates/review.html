@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Review {{ user.name }} - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    <div class="review-card glass-panel">
+        <h1 class="luxury-title">Review {{ user.name }}</h1>
+        
+        <div class="user-info">
+            <p class="email">{{ user.email }}</p>
+            {% if user.bio %}
+                <p class="bio">{{ user.bio }}</p>
+            {% endif %}
+        </div>
+        
+        <form action="{{ url_for('review_user', user_id=user.id) }}" method="POST" class="review-form">
+            <div class="form-group">
+                <label for="rating">Rating</label>
+                <div class="star-rating">
+                    <div class="star-input">
+                        <input type="radio" name="rating" id="rating-5" value="5">
+                        <label for="rating-5" class="fas fa-star"></label>
+                        <input type="radio" name="rating" id="rating-4" value="4">
+                        <label for="rating-4" class="fas fa-star"></label>
+                        <input type="radio" name="rating" id="rating-3" value="3">
+                        <label for="rating-3" class="fas fa-star"></label>
+                        <input type="radio" name="rating" id="rating-2" value="2">
+                        <label for="rating-2" class="fas fa-star"></label>
+                        <input type="radio" name="rating" id="rating-1" value="1">
+                        <label for="rating-1" class="fas fa-star"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="comment">Review</label>
+                <textarea id="comment" name="comment" rows="5" placeholder="Share your experience with this user..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-gold">Submit Review</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.review-card {
+    padding: 2rem;
+}
+
+.luxury-title {
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.user-info {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.email {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.bio {
+    color: var(--text-color);
+    opacity: 0.8;
+    line-height: 1.5;
+}
+
+.review-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.star-rating {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.star-input {
+    display: flex;
+    flex-direction: row-reverse;
+    font-size: 2rem;
+}
+
+.star-input input {
+    display: none;
+}
+
+.star-input label {
+    cursor: pointer;
+    color: #ccc;
+    padding: 0 0.2rem;
+    transition: color 0.3s ease;
+}
+
+.star-input label:hover,
+.star-input label:hover ~ label,
+.star-input input:checked ~ label {
+    color: var(--accent-color);
+}
+
+textarea {
+    width: 100%;
+    padding: 1rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    resize: vertical;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.btn-gold {
+    width: 100%;
+    padding: 1rem;
+}
+</style>
+{% endblock %}

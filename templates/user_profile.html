@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.name }}'s Profile - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>{{ user.name }}</h1>
+        <p class="user-location">{{ user.location }}</p>
+    </div>
+
+    <div class="profile-content">
+        <div class="profile-info">
+            <h2>About</h2>
+            <p class="user-bio">{{ user.bio }}</p>
+            
+            <div class="contact-info">
+                <h3>Contact Information</h3>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Phone:</strong> {{ user.phone }}</p>
+            </div>
+
+            {% if current_user.is_authenticated and current_user.id != user.id %}
+                <div class="message-section">
+                    <h3>Send Message</h3>
+                    <form method="POST" action="{{ url_for('send_message', receiver_id=user.id) }}">
+                        <div class="form-group">
+                            <textarea name="content" placeholder="Type your message here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Send Message</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if user.is_driver %}
+            <div class="user-cars">
+                <h2>Available Cars</h2>
+                <div class="car-grid">
+                    {% for car in user.cars %}
+                        <div class="car-card">
+                            <img src="{{ car.image_url }}" alt="{{ car.make }} {{ car.model }}" class="car-image">
+                            <div class="car-info">
+                                <h3 class="car-title">{{ car.make }} {{ car.model }}</h3>
+                                <p class="car-price">${{ "%.2f"|format(car.price_per_day) }}/day</p>
+                                <p class="car-location">{{ car.location }}</p>
+                                <div class="car-actions">
+                                    <a href="{{ url_for('car_details', car_id=car.id) }}" class="btn">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="user-reviews">
+            <h2>Reviews</h2>
+            {% if user.reviews %}
+                {% for review in user.reviews %}
+                    <div class="review-card">
+                        <div class="review-header">
+                            <span class="reviewer-name">{{ review.user.name }}</span>
+                            <div class="rating">
+                                {% for i in range(5) %}
+                                    <span class="star {% if i < review.rating %}filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="review-comment">{{ review.comment }}</p>
+                        <span class="review-date">{{ review.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No reviews yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

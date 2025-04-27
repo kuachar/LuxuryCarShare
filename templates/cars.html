@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Luxury Cars - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="cars-header">
+    <h1>Luxury Car Collection</h1>
+    <div class="search-section">
+        <form id="search-form" class="search-form" method="GET" action="{{ url_for('cars') }}">
+            <div class="search-inputs">
+                <div class="form-group">
+                    <select id="location-input" name="location" onchange="this.form.submit()">
+                        {% for city in allowed_cities %}
+                            <option value="{{ city }}" {% if city == location %}selected{% endif %}>{{ city }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="search-input" name="search" placeholder="Search by make, model, or price..." value="{{ request.args.get('search', '') }}">
+                </div>
+                <button type="submit" class="btn">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="car-grid">
+    {% if cars %}
+        {% for car in cars %}
+        <div class="car-card luxury">
+            <div class="car-image-container">
+                <img src="{{ car.image_url }}" alt="{{ car.make }} {{ car.model }}" class="car-image">
+                <div class="car-location-badge">
+                    <i class="fas fa-map-marker-alt"></i> {{ car.location }}
+                </div>
+            </div>
+            <div class="car-info">
+                <div class="car-header">
+                    <h3 class="car-title">{{ car.make }} {{ car.model }}</h3>
+                    <div class="car-owner">
+                        <a href="{{ url_for('user_profile', user_id=car.owner.id) }}" class="owner-link">
+                            <i class="fas fa-user"></i> {{ car.owner.name }}
+                        </a>
+                    </div>
+                </div>
+                <p class="car-price">${{ "%.2f"|format(car.price_per_day) }}/day</p>
+                <div class="car-actions">
+                    <a href="{{ url_for('car_details', car_id=car.id) }}" class="btn">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-cars-message">
+            <h2>No Luxury Cars Available</h2>
+            <p>We couldn't find any luxury cars in {{ location }}. Try searching in a different location or check back later!</p>
+            {% if current_user.is_authenticated and current_user.is_driver %}
+                <a href="{{ url_for('add_car') }}" class="btn">List Your Luxury Car</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

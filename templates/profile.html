@@ -1,0 +1,1078 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.name }} - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Enhanced Profile Header -->
+    <div class="profile-header glass-panel">
+        <div class="profile-layout">
+            <div class="profile-avatar">
+                <div class="avatar-circle">
+                    <span class="initials">
+                        {%- set name_parts = user.name.split() -%}
+                        {%- if name_parts|length > 1 -%}
+                            {{ name_parts[0][0] }}{{ name_parts[1][0] }}
+                        {%- else -%}
+                            {{ name_parts[0][0] }}
+                        {%- endif -%}
+                    </span>
+                </div>
+                <div class="rating-section">
+                    <div class="stars">
+                        {% for i in range(5) %}
+                            {% if i < avg_rating %}
+                                <i class="fas fa-star gold"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="review-count">{{ reviews|length }} reviews</p>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="text-center">
+                    <h1 class="luxury-title">{{ user.name }}</h1>
+                    <p class="email">{{ user.email }}</p>
+                    
+                    <!-- About Section -->
+                    <div class="bio-section">
+                        <h3 class="section-subtitle">About
+                            {% if current_user.id == user.id %}
+                            <button class="btn btn-glass edit-icon" onclick="openAboutModal()">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                        </h3>
+                        <p class="bio">{{ user.bio or 'No bio available.' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Car Owner Calendar and Earnings Section (only visible to car owners) -->
+    {% if current_user.id == user.id %}
+    <div class="owner-dashboard glass-panel">
+        <h2 class="section-title">My Rental Dashboard</h2>
+        
+        <div class="dashboard-summary">
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>Total Earnings</h3>
+                    <p class="summary-value">${{ "%.2f"|format(total_earnings) }}</p>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>Approved Bookings</h3>
+                    <p class="summary-value">{{ approved_bookings|length }}</p>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>Pending Requests</h3>
+                    <p class="summary-value">{{ booking_requests|length }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="rental-calendar">
+            <h3 class="section-subtitle">My Rental Calendar</h3>
+            <p class="calendar-info"><i class="fas fa-info-circle"></i> This calendar shows all your approved bookings to help you avoid scheduling conflicts.</p>
+            
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <div class="calendar-cell">Car</div>
+                    <div class="calendar-cell">Dates</div>
+                    <div class="calendar-cell">Renter</div>
+                    <div class="calendar-cell">Earnings</div>
+                </div>
+                
+                {% if calendar_bookings %}
+                    {% for booking in calendar_bookings %}
+                    <div class="calendar-row">
+                        <div class="calendar-cell">{{ booking.car }}</div>
+                        <div class="calendar-cell">
+                            <span class="date-range">
+                                <i class="fas fa-calendar-alt"></i> 
+                                {{ booking.start_date }} to {{ booking.end_date }}
+                            </span>
+                        </div>
+                        <div class="calendar-cell">{{ booking.renter }}</div>
+                        <div class="calendar-cell earnings">${{ "%.2f"|format(booking.price) }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-bookings">
+                        <p>No approved bookings yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Booking Requests Section (only visible to car owners) -->
+    {% if current_user.id == user.id %}
+    <div class="section-container glass-panel">
+        <h2 class="section-title">Booking Requests</h2>
+        {% if booking_requests %}
+        <div class="cards-grid">
+            {% for booking in booking_requests %}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="luxury-subtitle">{{ booking.car.make }} {{ booking.car.model }}</h3>
+                    <span class="booking-status pending">Pending</span>
+                </div>
+                <div class="card-details">
+                    <p><i class="fas fa-user"></i> Requested by: {{ booking.user.name }}</p>
+                    <p><i class="fas fa-calendar"></i> {{ booking.start_date.strftime('%Y-%m-%d') }} to {{ booking.end_date.strftime('%Y-%m-%d') }}</p>
+                    <p><i class="fas fa-dollar-sign"></i> Total: ${{ "%.2f"|format(booking.total_price) }}</p>
+                </div>
+                <div class="card-actions">
+                    <form action="{{ url_for('approve_booking', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-gold">Approve</button>
+                    </form>
+                    <form action="{{ url_for('reject_booking', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+                    <a href="{{ url_for('conversation', user_id=booking.user.id) }}" class="btn btn-glass">
+                        <i class="fas fa-envelope"></i> Message
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-items">No booking requests yet.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- User's Bookings Section -->
+    {% if current_user.id == user.id %}
+    <div class="section-container glass-panel">
+        <h2 class="section-title">My Bookings</h2>
+        {% if user_bookings %}
+        <div class="cards-grid">
+            {% for booking in user_bookings %}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="luxury-subtitle">{{ booking.car.make }} {{ booking.car.model }}</h3>
+                    <span class="booking-status {{ booking.status }}">{{ booking.status }}</span>
+                </div>
+                <div class="card-details">
+                    <p><i class="fas fa-calendar"></i> {{ booking.start_date.strftime('%Y-%m-%d') }} to {{ booking.end_date.strftime('%Y-%m-%d') }}</p>
+                    <p><i class="fas fa-dollar-sign"></i> Total: ${{ "%.2f"|format(booking.total_price) }}</p>
+                </div>
+                {% if booking.status == 'pending' %}
+                <div class="card-actions">
+                    <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" class="btn btn-danger">Cancel Booking</a>
+                    <a href="{{ url_for('conversation', user_id=booking.car.owner_id) }}" class="btn btn-glass">
+                        <i class="fas fa-envelope"></i> Message Owner
+                    </a>
+                </div>
+                {% elif booking.status == 'approved' %}
+                <div class="card-actions">
+                    <a href="{{ url_for('conversation', user_id=booking.car.owner_id) }}" class="btn btn-glass">
+                        <i class="fas fa-envelope"></i> Message Owner
+                    </a>
+                    {% if not Review.query.filter_by(reviewer_id=current_user.id, reviewed_user_id=booking.car.owner_id).first() %}
+                    <a href="{{ url_for('write_review', user_id=booking.car.owner_id) }}" class="btn btn-gold">
+                        <i class="fas fa-star"></i> Review Owner
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-items">No bookings yet.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- User's Cars Section -->
+    <div class="section-container glass-panel">
+        <h2 class="section-title">{{ "My" if current_user.id == user.id else user.name + "'s" }} Cars</h2>
+        
+        {% if current_user.id == user.id %}
+        <div class="section-actions">
+            <a href="{{ url_for('add_car') }}" class="btn btn-gold">
+                <i class="fas fa-plus"></i> Add New Car
+            </a>
+        </div>
+        {% endif %}
+        
+        {% if user_cars %}
+        <div class="cards-grid">
+            {% for car in user_cars %}
+            <div class="card">
+                <div class="card-image">
+                    <img src="{{ car.image_url }}" alt="{{ car.make }} {{ car.model }}">
+                </div>
+                <div class="card-content">
+                    <h3 class="luxury-subtitle">{{ car.make }} {{ car.model }}</h3>
+                    <p class="car-price">${{ "%.2f"|format(car.price_per_day) }} / day</p>
+                    <p class="car-location"><i class="fas fa-map-marker-alt"></i> {{ car.location }}</p>
+                </div>
+                <div class="card-actions">
+                    <a href="{{ url_for('car_details', car_id=car.id) }}" class="btn btn-glass">View Details</a>
+                    {% if current_user.id == user.id %}
+                    <a href="{{ url_for('edit_car', car_id=car.id) }}" class="btn btn-glass">Edit</a>
+                    <form action="{{ url_for('delete_car', car_id=car.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this car?');" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                    {% else %}
+                    <a href="{{ url_for('book_car', car_id=car.id) }}" class="btn btn-gold">Book Now</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-items">No cars listed yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="section-container glass-panel">
+        <h2 class="section-title">Reviews</h2>
+        {% if reviews %}
+        <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-info">
+                        <h3 class="reviewer-name">{{ review.reviewer.name }}</h3>
+                        <div class="review-rating">
+                            {% for i in range(5) %}
+                                {% if i < review.rating %}
+                                    <i class="fas fa-star gold"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="review-date">
+                        {{ review.created_at.strftime('%Y-%m-%d') }}
+                    </div>
+                </div>
+                <p class="review-comment">{{ review.comment }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-items">No reviews yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- About Modal -->
+<div id="aboutModal" class="modal">
+    <div class="modal-content glass-panel">
+        <span class="close" onclick="closeModal('aboutModal')">&times;</span>
+        <h2 class="modal-title">Edit About</h2>
+        <form action="{{ url_for('update_about') }}" method="POST">
+            <div class="form-group">
+                <label for="bio">About You</label>
+                <textarea name="bio" id="bio" rows="5" placeholder="Tell others about yourself...">{{ user.bio }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-gold">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content glass-panel">
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+        <h2 class="modal-title">Change Password</h2>
+        <form action="{{ url_for('change_password') }}" method="POST">
+            <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <input type="password" name="current_password" id="current_password" required>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <input type="password" name="new_password" id="new_password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm New Password</label>
+                <input type="password" name="confirm_password" id="confirm_password" required>
+            </div>
+            <button type="submit" class="btn btn-gold">Change Password</button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Enhanced Profile Styles */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.profile-header {
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.profile-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.profile-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-color), #d4af37);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.initials {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: -1px;
+}
+
+.profile-info {
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+.luxury-title {
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.email {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.rating-section {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.stars {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.stars .gold {
+    color: var(--accent-color);
+}
+
+.review-count {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.bio-section {
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--glass-border);
+    text-align: center;
+}
+
+.section-subtitle {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.edit-icon {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.bio {
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.badge {
+    display: inline-block;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    .profile-layout {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .profile-avatar {
+        flex-shrink: 0;
+    }
+    
+    .profile-info, .text-center, .luxury-title, .email, .bio-section, .bio {
+        text-align: center !important;
+    }
+    
+    .section-subtitle {
+        justify-content: center !important;
+    }
+}
+
+/* Main Container */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Profile Header */
+.profile-header {
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.luxury-title {
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.email {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.rating-section {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.stars {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.stars .gold {
+    color: var(--accent-color);
+}
+
+.review-count {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.bio-section {
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--glass-border);
+    text-align: center;
+}
+
+.section-subtitle {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.edit-icon {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.bio {
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.badge {
+    display: inline-block;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+}
+
+/* Section Container */
+.section-container {
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.section-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Cards Grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--gold-glow);
+}
+
+.card-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.card:hover .card-image img {
+    transform: scale(1.05);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.luxury-subtitle {
+    color: var(--accent-color);
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.booking-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.booking-status.pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.booking-status.approved {
+    background-color: #28a745;
+    color: white;
+}
+
+.booking-status.rejected, .booking-status.cancelled {
+    background-color: #dc3545;
+    color: white;
+}
+
+.card-content, .card-details {
+    padding: 1rem;
+}
+
+.car-price {
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+}
+
+.car-location {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin: 0;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.card-actions .btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.no-items {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    padding: 2rem 0;
+}
+
+/* Owner Dashboard Styles */
+.owner-dashboard {
+    margin-bottom: 2rem;
+    padding: 2rem;
+}
+
+.dashboard-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--gold-glow);
+}
+
+.summary-icon {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-right: 1rem;
+}
+
+.summary-content h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.summary-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 0.5rem 0 0 0;
+}
+
+.rental-calendar {
+    margin-top: 2rem;
+}
+
+.calendar-info {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-align: center;
+}
+
+.calendar-container {
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.calendar-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+    padding: 1rem;
+    border-top: 1px solid var(--glass-border);
+    transition: background-color 0.3s ease;
+}
+
+.calendar-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-cell {
+    padding: 0.5rem;
+}
+
+.date-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.earnings {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.no-bookings {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* Reviews Styles */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.review-card {
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.review-card:hover {
+    transform: translateY(-3px);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.reviewer-name {
+    margin: 0 0 0.5rem 0;
+    color: var(--accent-color);
+}
+
+.review-rating {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.review-date {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-size: 0.9rem;
+}
+
+.review-comment {
+    color: var(--text-color);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    margin: 10% auto;
+    width: 90%;
+    max-width: 500px;
+    padding: 2rem;
+    animation: modalFadeIn 0.3s;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.close {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: var(--accent-color);
+}
+
+.modal-title {
+    color: var(--accent-color);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-gold {
+    background: linear-gradient(135deg, var(--accent-color), #d4af37);
+    color: var(--primary-color);
+}
+
+.btn-gold:hover {
+    box-shadow: var(--gold-glow);
+    transform: translateY(-2px);
+}
+
+.btn-glass {
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    color: var(--text-color);
+}
+
+.btn-glass:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .profile-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .profile-actions .btn {
+        width: 100%;
+    }
+    
+    .dashboard-summary {
+        flex-direction: column;
+    }
+    
+    .calendar-header, .calendar-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .calendar-cell:nth-child(3), .calendar-cell:nth-child(4) {
+        margin-top: 0.5rem;
+    }
+    
+    .card-actions {
+        flex-direction: column;
+    }
+    
+    .card-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// About Modal
+function openAboutModal() {
+    document.getElementById('aboutModal').style.display = 'block';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Password Modal
+function openPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'block';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    if (event.target == document.getElementById('aboutModal')) {
+        closeModal('aboutModal');
+    }
+    if (event.target == document.getElementById('passwordModal')) {
+        closeModal('passwordModal');
+    }
+}
+</script>
+{% endblock %}

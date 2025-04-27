@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Car - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="edit-car-container">
+    <div class="edit-car-card">
+        <h2>Edit Car</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="make">Car Make</label>
+                <input type="text" id="make" name="make" value="{{ car.make }}" required>
+            </div>
+            <div class="form-group">
+                <label for="model">Car Model</label>
+                <input type="text" id="model" name="model" value="{{ car.model }}" required>
+            </div>
+            <div class="form-group">
+                <label for="price_per_day">Price per Day ($)</label>
+                <input type="number" id="price_per_day" name="price_per_day" step="0.01" value="{{ car.price_per_day }}" required>
+            </div>
+            <div class="form-group">
+                <label for="image_url">Image URL</label>
+                <input type="url" id="image_url" name="image_url" value="{{ car.image_url }}" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <select id="location" name="location" required>
+                    {% for city in allowed_cities %}
+                        <option value="{{ city }}" {% if city == car.location %}selected{% endif %}>{{ city }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn">Update Car</button>
+            <a href="{{ url_for('profile') }}" class="btn btn-outline">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

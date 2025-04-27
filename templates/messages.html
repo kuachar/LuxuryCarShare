@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <h1 class="luxury-title">My Conversations</h1>
+    
+    <div class="messages-header">
+        {% if unread_message_count > 0 %}
+        <a href="{{ url_for('mark_all_read') }}" class="btn-mark-all-read">
+            <i class="fas fa-check-double"></i> Mark All as Read
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="conversations-list glass-panel">
+        {% if conversations %}
+            {% for conversation in conversations %}
+                <a href="{{ url_for('conversation', user_id=conversation.user.id) }}" class="conversation-card">
+                    <div class="conversation-user">
+                        <span class="user-name">{{ conversation.user.name }}</span>
+                        <span class="message-time">{{ conversation.latest_message.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <p class="message-preview">
+                        {% if conversation.latest_message.sender_id == current_user.id %}
+                            <span class="sent-indicator">You: </span>
+                        {% endif %}
+                        {{ conversation.latest_message.content|truncate(100) }}
+                    </p>
+                    {% if conversation.latest_message.sender_id != current_user.id and not conversation.latest_message.is_read %}
+                        <div class="unread-badge">New</div>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="no-conversations">
+                <i class="fas fa-comments"></i>
+                <p>No conversations yet. Start by booking a car or viewing user profiles!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.messages-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.luxury-title {
+    text-align: center;
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 2rem;
+}
+
+.conversations-list {
+    padding: 1.5rem;
+}
+
+.conversation-card {
+    display: block;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.conversation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--gold-glow);
+}
+
+.conversation-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.user-name {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.message-time {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-size: 0.8rem;
+}
+
+.message-preview {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.sent-indicator {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.unread-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--accent-color);
+    color: var(--primary-color);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.no-conversations {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.no-conversations i {
+    font-size: 3rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.no-conversations p {
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.messages-header {
+    margin-bottom: 1rem;
+}
+
+.btn-mark-all-read {
+    background: var(--accent-color);
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .luxury-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

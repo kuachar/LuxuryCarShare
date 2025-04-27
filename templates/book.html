@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ car.make }} {{ car.model }} - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="booking-card glass-panel">
+        <div class="car-preview">
+            <img src="{{ car.image_url }}" alt="{{ car.make }} {{ car.model }}" class="car-image">
+        </div>
+        <div class="booking-form">
+            <h2 class="luxury-title">Book {{ car.make }} {{ car.model }}</h2>
+            <p class="car-price">${{ "%.2f"|format(car.price_per_day) }}/day</p>
+            
+            <form id="booking-form" method="POST">
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" required min="{{ today }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" required min="{{ today }}">
+                </div>
+                <div class="price-summary glass-panel">
+                    <h3>Price Summary</h3>
+                    <p>Price per day: ${{ "%.2f"|format(car.price_per_day) }}</p>
+                    <p>Total price: <span id="total_price">$0.00</span></p>
+                </div>
+                <div class="booking-notice">
+                    <p><i class="fas fa-info-circle"></i> Your booking will require approval from the car owner.</p>
+                </div>
+                <input type="hidden" id="price_per_day" value="{{ car.price_per_day }}">
+                <input type="hidden" id="unavailable_dates" value="{{ unavailable_dates|tojson }}">
+                <button type="submit" class="btn btn-gold">Request Booking</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.booking-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.booking-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+}
+
+.car-preview {
+    margin-bottom: 2rem;
+}
+
+.car-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.booking-form {
+    flex: 1;
+}
+
+.luxury-title {
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+}
+
+.car-price {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.price-summary {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+}
+
+.price-summary h3 {
+    color: var(--accent-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.booking-notice {
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.btn-gold {
+    width: 100%;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .booking-card {
+        flex-direction: row;
+        gap: 2rem;
+    }
+    
+    .car-preview {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .booking-form {
+        flex: 1;
+    }
+}
+</style>
+
+<script>
+// Function to calculate total price
+function calculateTotal() {
+    var startDate = new Date(document.getElementById('start_date').value);
+    var endDate = new Date(document.getElementById('end_date').value);
+    
+    if (startDate && endDate && startDate <= endDate) {
+        // Calculate number of days
+        var diffTime = Math.abs(endDate - startDate);
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include both start and end days
+        
+        // Calculate total price
+        var pricePerDay = parseFloat(document.getElementById('price_per_day').value);
+        var totalPrice = pricePerDay * diffDays;
+        
+        // Update the total price display
+        document.getElementById('total_price').textContent = '$' + totalPrice.toFixed(2);
+    }
+}
+
+// Function to check if a date is unavailable
+function isDateUnavailable(dateStr) {
+    var unavailableDatesElement = document.getElementById('unavailable_dates');
+    if (unavailableDatesElement) {
+        try {
+            var unavailableDates = JSON.parse(unavailableDatesElement.value);
+            for (var i = 0; i < unavailableDates.length; i++) {
+                if (unavailableDates[i] === dateStr) {
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing unavailable dates:", e);
+        }
+    }
+    return false;
+}
+
+// Function to disable unavailable dates
+function disableUnavailableDates() {
+    var startDateInput = document.getElementById('start_date');
+    var endDateInput = document.getElementById('end_date');
+    
+    // Add event listeners to date inputs
+    startDateInput.addEventListener('change', function() {
+        // Reset end date if it's before start date
+        if (endDateInput.value && new Date(endDateInput.value) < new Date(this.value)) {
+            endDateInput.value = '';
+        }
+        
+        // Set min date for end date
+        endDateInput.min = this.value;
+        
+        calculateTotal();
+    });
+    
+    endDateInput.addEventListener('change', calculateTotal);
+    
+    // Validate dates on form submission
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+        var startDate = new Date(startDateInput.value);
+        var endDate = new Date(endDateInput.value);
+        
+        // Check if any date in the range is unavailable
+        var currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            var dateStr = currentDate.toISOString().split('T')[0];
+            if (isDateUnavailable(dateStr)) {
+                e.preventDefault();
+                alert('Some dates in your selection are unavailable. Please choose different dates.');
+                return false;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+    });
+}
+
+// Initialize when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    disableUnavailableDates();
+});
+</script>
+{% endblock %}

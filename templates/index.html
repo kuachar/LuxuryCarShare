@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Luxury CarShare Hub - Premium Car Sharing{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">LUXURY CARSHARE</h1>
+    <p class="hero-subtitle">Experience the pinnacle of automotive excellence with our exclusive collection of premium vehicles. From sleek sports cars to sophisticated luxury sedans, indulge in the ultimate driving experience.</p>
+    <div class="hero-buttons">
+        <a href="{{ url_for('cars') }}" class="btn">Browse Luxury Fleet</a>
+        {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('register') }}" class="btn btn-outline">Join Elite Circle</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="features">
+    <div class="feature-card">
+        <i class="fas fa-car-side"></i>
+        <h3>Premium Selection</h3>
+        <p>Curated collection of luxury vehicles from world-renowned manufacturers</p>
+    </div>
+    <div class="feature-card">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Elite Security</h3>
+        <p>Verified owners and comprehensive insurance coverage for peace of mind</p>
+    </div>
+    <div class="feature-card">
+        <i class="fas fa-star"></i>
+        <h3>Exclusive Service</h3>
+        <p>Premium support and concierge service for our distinguished members</p>
+    </div>
+</div>
+
+<div class="city-showcase subtle">
+    <h3>Available in Select Locations</h3>
+    <div class="city-grid">
+        <div class="city-card">
+            <div class="city-name">{{ allowed_cities[0] }}</div>
+            <a href="{{ url_for('cars', location=allowed_cities[0]) }}" class="btn btn-outline btn-small">View Cars</a>
+        </div>
+        <div class="city-card">
+            <div class="city-name">{{ allowed_cities[1] }}</div>
+            <a href="{{ url_for('cars', location=allowed_cities[1]) }}" class="btn btn-outline btn-small">View Cars</a>
+        </div>
+        <div class="city-card">
+            <div class="city-name">{{ allowed_cities[2] }}</div>
+            <a href="{{ url_for('cars', location=allowed_cities[2]) }}" class="btn btn-outline btn-small">View Cars</a>
+        </div>
+    </div>
+    <div class="city-grid-bottom">
+        <div class="city-card">
+            <div class="city-name">{{ allowed_cities[3] }}</div>
+            <a href="{{ url_for('cars', location=allowed_cities[3]) }}" class="btn btn-outline btn-small">View Cars</a>
+        </div>
+        <div class="city-card">
+            <div class="city-name">{{ allowed_cities[4] }}</div>
+            <a href="{{ url_for('cars', location=allowed_cities[4]) }}" class="btn btn-outline btn-small">View Cars</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

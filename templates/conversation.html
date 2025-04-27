@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation with {{ other_user.name }} - CarShare Hub{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="conversation-header glass-panel">
+        <div class="header-content">
+            <div class="header-left">
+                <a href="{{ url_for('messages') }}" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Messages
+                </a>
+            </div>
+            <h1 class="luxury-title">Conversation with {{ other_user.name }}</h1>
+            <div class="header-right">
+                <a href="{{ url_for('user_profile', user_id=other_user.id) }}" class="view-profile-btn">
+                    <i class="fas fa-user"></i> View Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="messages-container glass-panel">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}">
+                    <div class="message-content">
+                        {{ message.content }}
+                    </div>
+                    <div class="message-time">
+                        {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-messages">
+                <p>No messages yet. Start the conversation!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="message-form glass-panel">
+        <form action="{{ url_for('send_message', receiver_id=other_user.id) }}" method="POST">
+            <div class="form-group">
+                <textarea name="content" id="message-content" rows="3" placeholder="Type your message here..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-gold">
+                <i class="fas fa-paper-plane"></i> Send Message
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+.conversation-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.conversation-header {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+}
+
+.back-button {
+    color: var(--text-color);
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.back-button:hover {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+.view-profile-btn {
+    color: var(--accent-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gold-glow);
+}
+
+.luxury-title {
+    width: 100%;
+    text-align: center;
+    color: var(--accent-color);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.messages-container {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 300px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.message {
+    margin-bottom: 1.5rem;
+    max-width: 70%;
+    padding: 1rem;
+    border-radius: 1rem;
+}
+
+.message.sent {
+    margin-left: auto;
+    background: rgba(201, 165, 92, 0.2);
+    border: 1px solid var(--accent-color);
+}
+
+.message.received {
+    margin-right: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message-content {
+    color: var(--text-color);
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.message-time {
+    font-size: 0.8rem;
+    color: var(--text-color);
+    opacity: 0.6;
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+.no-messages {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+.message-form {
+    padding: 1.5rem;
+}
+
+.message-form textarea {
+    width: 100%;
+    padding: 1rem;
+    background: var(--glass-effect);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    resize: none;
+    margin-bottom: 1rem;
+}
+
+.message-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.message-form button {
+    float: right;
+}
+
+@media (max-width: 768px) {
+    .message {
+        max-width: 85%;
+    }
+    
+    .luxury-title {
+        font-size: 1.4rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .header-content {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .back-button {
+        margin-bottom: 0;
+    }
+    
+    .luxury-title {
+        text-align: center;
+        flex: 1;
+    }
+}
+</style>
+
+<script>
+// Scroll to the bottom of messages container on page load
+window.onload = function() {
+    const messagesContainer = document.querySelector('.messages-container');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+};
+</script>
+{% endblock %}
